@@ -15,13 +15,16 @@
 '''
 import sys
 
-from argh import arg, ArghParser
-from wordnik import Wordnik
-from clint.textui import progress
-
 def oops(message):
     ''' Show error message and quit'''
     sys.exit(message)
+
+try:
+  from argh import arg, ArghParser
+  from wordnik import Wordnik
+  from clint.textui import progress
+except ImportError:
+  oops('Required packages [argh, wordnik, clint] are not installed!')
 
 class Lookup:
     ''' Looks up different stuff on Wordnick
@@ -76,12 +79,15 @@ class Decker:
         for card_front, card_back in self.cards.iteritems():
             import_line = card_front + u';'
             for field in card_back.values():
+              #TODO: escape ';' delimeteres
                 if(field):
                     import_line += field + u'<hr />'
             import_line.rstrip('<hr />')
+            import_line += '\n'
             output.write('%s\n' % import_line.encode('utf-8'))
         print 'Deck compilation complete! You may now import resulting "%s" file using Anki.' % self.deck
 
+#TODO: make it work as it should!
 def install(args):
     "Install all required python modules using pip/easy_install (should be run as root)"
     packages = ['wordnik', 'argh', 'clint']
