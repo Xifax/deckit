@@ -81,7 +81,7 @@ class Decker:
             for field in card_back.values():
               #TODO: escape ';' delimeteres
                 if(field):
-                    import_line += field + u'<hr />'
+                    import_line += field.replace(';', ',') + u'<hr />'
             import_line.rstrip('<hr />')
             import_line += '\n'
             output.write('%s\n' % import_line.encode('utf-8'))
