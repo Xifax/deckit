@@ -1,6 +1,8 @@
-deckit<br />
-Python script to quickly convert list of (eng) words to text file with (eng-eng) examples and definitions, [suitable] for [Anki] import.
-All words are processed using [Wordnik]
+deckit
+======
+
+Python script to quickly convert list of (eng) words to text file with (eng-eng) examples and definitions, [suitable] for [Anki] import.<br />
+All words are processed using [Wordnik], so one should aquire unique api key.
 
 ---
 
@@ -10,11 +12,11 @@ Installation:
 
 Usage:
 
-    python deckit process key words deck
+    python deckit do key words deck
     
 or
 
-    ./deckit process key words deck
+    ./deckit do key words deck
     
 Notes:
 
@@ -24,6 +26,11 @@ Notes:
     * wordnik
     * clint
 * One should get api key from [Wordnik]
+
+Bugs and glitches:
+
+* Problems with non-ascii symbols
+* Blank cards
 
 
 [Anki]: http://ankisrs.net/ 
