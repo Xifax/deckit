@@ -8,15 +8,15 @@ All words are processed using [Wordnik], so one should aquire unique api key.
 
 Installation:
 
-    python deckit install
+    python deckit.py install
 
 Usage:
 
-    python deckit do key words deck
+    python deckit.py do key words deck
     
 or
 
-    ./deckit do key words deck
+    ./deckit.py do key words deck
     
 Notes:
 
@@ -25,12 +25,13 @@ Notes:
     * argh
     * wordnik
     * clint
+    * ordereddict
 * One should get api key from [Wordnik]
 
-Bugs and glitches:
+Possible bugs and glitches:
 
 * Problems with non-ascii symbols
-* Blank cards
+* Sudden blank cards
 
 
 [Anki]: http://ankisrs.net/ 

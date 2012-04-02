@@ -53,7 +53,9 @@ __license__ = 'GPL'
 __version__ = '0.9.1'
 
 import sys
-import traceback
+import datetime
+import webbrowser
+#import traceback
 #import logging
 
 try:
@@ -62,7 +64,10 @@ try:
     from clint.textui import progress, colored, puts
     from ordereddict import OrderedDict
 except ImportError:
-    sys.exit('Required packages [argh, wordnik, clint] are not installed!')
+    sys.exit('Required packages [argh, wordnik, clint, ordereddict] are not installed!\nRun script with "install" option')
+
+# Yes or no console dialog
+yes_no = lambda msg: True if raw_input("%s (y/N) " % msg).lower() == 'y' else False
 
 def oops(message):
     ''' Show error message and quit'''
@@ -79,11 +84,21 @@ class Lookup:
         puts(colored.blue('Using Wordnik API key: %s' % api_key))
         self.w = Wordnik(api_key)
         try:
-            # TODO: display additional information
-            if(self.w.account_get_api_token_status()['valid']):
-                puts(colored.green('OK, API key is valid. Commencing lookup (it may take a while)...'))
-        except TypeError:
-            raise Exception ('Wrond API key!')
+            stats = self.w.account_get_api_token_status()
+            #bold = "\033[1m"
+            #reset = "\033[0;0m"
+            if(stats['valid']):
+                puts(colored.green('OK, API key is valid.'))
+                puts('Requests performed: \033[1m%s\033[0;0m Remaining calls: \033[1m%s\033[0;0m Quota eset in: \033[1m%s\033[0;0m' %
+                                        (
+                                            stats['totalRequests'],
+                                            stats['remainingCalls'],
+                                            datetime.timedelta(milliseconds=stats['resetsInMillis'])
+                                        )
+                    )
+                puts(colored.blue('Commencing lookup (it may take a while)...'))
+        except TypeError as e:
+            raise Exception ('Wrong API key: %s' % e)
 
     def define(self, word):
         '''Get all available definitions'''
@@ -167,7 +182,6 @@ class Decker:
         output = open(self.deck, 'w')
         for card_front, card_back in progress.bar(self.cards.items()):
             try:
-                #print card_front
                 # Front of a card: word itself + pronounciation (if any)
                 # TODO: check for non-ascii symbols
                 # TODO: exclude items without definitions and examples
@@ -195,13 +209,12 @@ class Decker:
             except Exception, e:
                 #oops('Could not write a card: %s for word"%s"' % (e, card_front.encode('utf-8')))
                 oops('Could not write a card: %s' % e)
-                traceback.print_stack()
+                #traceback.print_stack()
         puts(colored.green('Deck compilation complete! You may now import resulting "%s" file using Anki.' % self.deck))
 
-#TODO: make it work as it should!
 def install(args):
-    "Install all required python modules using pip/easy_install (should be run as root)"
-    packages = ['wordnik', 'argh', 'clint']
+    "Install all required python modules using pip/easy_install (should be run as root/administrator)"
+    packages = ['wordnik', 'argh', 'clint', 'ordereddict']
     try:
         import pip
         pip.main(['install'] + packages)
@@ -212,7 +225,10 @@ def install(args):
             for package in packages:
                 easy_install.main(['-U', package])
         except ImportError:
-            oops('Please, install either pip or setuptools')
+            print 'Please, install either pip or setuptools.'
+            if(yes_no('Open setuptools dowload page in browser?')):
+                webbrowser.open_new('http://pypi.python.org/pypi/setuptools#downloads')
+
 
 @arg('api_key', default="key", help='text file with wordnik api key (first line)')
 @arg('file_in', default="words", help='text file with words (separated by line)')
@@ -251,17 +267,23 @@ def do(args):
                             ])
     except Exception as e:
         oops('Some problem with Wordnik arised: %s' % e)
-        traceback.print_stack()
+        #traceback.print_stack()
 
     # 4. Save to Anki import-compatible text file
     try:
         Decker(cards, args.deck_out)
     except Exception as e:
         oops('Could not write resulting deck: %s' % e)
-        traceback.print_stack()
+        #traceback.print_stack()
 
 if __name__=='__main__':
-    # As of now, will work with argh only - not good
-    p = ArghParser()
-    p.add_commands([do, install])
-    p.dispatch()
+    try:
+        p = ArghParser()
+        p.add_commands([do, install])
+        p.dispatch()
+    # In case some python modules are unavailable on target system
+    except Exception as e:
+        if 'install' in sys.argv:
+            install(sys.argv)
+        else:
+            print 'There was execution error: %s \nPlease, run script with "install" option' % e
