@@ -50,7 +50,7 @@
 __author__ = 'Artiom Basenko'
 __email_ = 'demi.log@gmail.com'
 __license__ = 'GPL'
-__version__ = '0.9.1'
+__version__ = '0.9.3'
 
 import sys
 import datetime
@@ -89,7 +89,7 @@ class Lookup:
             #reset = "\033[0;0m"
             if(stats['valid']):
                 puts(colored.green('OK, API key is valid.'))
-                puts('Requests performed: \033[1m%s\033[0;0m Remaining calls: \033[1m%s\033[0;0m Quota eset in: \033[1m%s\033[0;0m' %
+                puts('Requests performed: \033[1m%s\033[0;0m Remaining calls: \033[1m%s\033[0;0m Quota reset in: \033[1m%s\033[0;0m' %
                                         (
                                             stats['totalRequests'],
                                             stats['remainingCalls'],
@@ -117,8 +117,8 @@ class Lookup:
         examples = self.w.word_get_examples(word)
         card_example = ''
         if 'examples' in examples:
-            # Use no more than 4 example sentences (or as limit for w_g_examples())
-            for example in examples['examples'][:4]:
+            # Use no more than 3 example sentences (may also set limit for w_g_examples())
+            for example in examples['examples'][:3]:
                 if 'text' in example:
                     card_example += example['text'].replace(word, Decker.bold(word)) + u'<br />'
         return card_example
@@ -180,11 +180,14 @@ class Decker:
         chop = lambda string, ending: string[:-len(ending)] if string.endswith(ending) else string
 
         output = open(self.deck, 'w')
-        for card_front, card_back in progress.bar(self.cards.items()):
+        for card_front, card_back in self.cards.items():
             try:
                 # Front of a card: word itself + pronounciation (if any)
                 # TODO: check for non-ascii symbols
-                # TODO: exclude items without definitions and examples
+                # Skip the word if no examples or definitions found
+                if (not card_back['define'] and not card_back['example']):
+                    puts(colored.yellow('Skipping "%s" (no definition or examples found)' % card_front))
+                    continue
                 import_line = card_front
                 if(card_back['pronounce']):
                     import_line += u'<br />' + Decker.span(card_back['pronounce'])
@@ -202,10 +205,10 @@ class Decker:
                         import_line += field.replace(';', ',') + u'<hr />'
                     # Removing <br /> before <hr />
                     import_line = import_line.replace(u'<br /></span><hr />', u'</span><hr />')
-                    # Chopping the last horizontal line
-                    import_line = chop(import_line, u'<hr />')
-                    # Write new card suitable for import
-                    output.write('%s\n' % import_line.encode('utf-8'))
+                # Chopping the last horizontal line
+                import_line = chop(import_line, u'<hr />')
+                # Write new card suitable for import
+                output.write('%s\n' % import_line.encode('utf-8'))
             except Exception, e:
                 #oops('Could not write a card: %s for word"%s"' % (e, card_front.encode('utf-8')))
                 oops('Could not write a card: %s' % e)
@@ -248,11 +251,12 @@ def do(args):
         # Skip the words before the separator
         if(new_words_began):
             # Skip lines starting with '/*'
-            if(not line.startswith('/*')):
+            if(not line.startswith('/*') and not line.startswith('<!--')):
                 new_words.append(line.strip('\r\n'))
         # Separator ought to be at the beginning of the file or somewhere else
         if line.startswith('<!--') and line.strip('\r\n').endswith('-->'):
-            new_words_began = True
+            # In case there're multiple separators
+            new_words_began = not new_words_began
 
     # 3. Compile definitions and examples as deck cards
     cards = {}
