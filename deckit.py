@@ -13,11 +13,14 @@
     Easily prepare english to english Anki decks for large unformatted lists of unknown vocabulary.
 
     -> Input file format (markdown compatible):
-    <!-- words start from here -->
+    <!-- new words start from here -->
     foo
     bar
     baz
     /*zug*/
+    <!-- old words from here on -->
+    boo
+    baf
 
     -> Resulting card format:
         word
@@ -31,7 +34,8 @@
 
     -> Notes:
     * for card front some unicode-compatible font should be used (phonetic symbols), e.g. Gentium Plus
-    * only two fields are in resulting import txt: front and back; no tags included;
+    * only two fields in resulting import txt: front and back;
+    * no tags included;
 
     -> What could be done better:
     * better coloring scheme (may be some suave tones, instead of generic ones);
@@ -39,24 +43,15 @@
     * definition field tweaks: part of speech/dictionary coloring;
     * better windows compatibility;
 
-    -> What (definitely) ought to be done:
-    * required modules installation procedure, using this very script (as of now - broken);
-
-    -> Possible bugs:
-    * Words (card_front) with non-ascii characters
-    * Empty fields
-
 '''
 __author__ = 'Artiom Basenko'
 __email_ = 'demi.log@gmail.com'
 __license__ = 'GPL'
-__version__ = '0.9.3'
+__version__ = '0.9.5'
 
 import sys
 import datetime
 import webbrowser
-#import traceback
-#import logging
 
 try:
     from argh import arg, ArghParser
@@ -73,6 +68,12 @@ def oops(message):
     ''' Show error message and quit'''
     puts(colored.red(message)) or sys.exit(1)
 
+def annotate(string, items):
+    ''' Applies special formatting to multiple items in string'''
+    for item in items:
+        string = string.replace(item, Decker.span(item))
+    return string
+
 class Lookup:
     ''' Looks up different stuff on Wordnick
         NB: no batch-processing - very slow!
@@ -85,8 +86,6 @@ class Lookup:
         self.w = Wordnik(api_key)
         try:
             stats = self.w.account_get_api_token_status()
-            #bold = "\033[1m"
-            #reset = "\033[0;0m"
             if(stats['valid']):
                 puts(colored.green('OK, API key is valid.'))
                 puts('Requests performed: \033[1m%s\033[0;0m Remaining calls: \033[1m%s\033[0;0m Quota reset in: \033[1m%s\033[0;0m' %
@@ -102,23 +101,23 @@ class Lookup:
 
     def define(self, word):
         '''Get all available definitions'''
+        annotations = ['Informal', 'Slang']
         # TODO: add part of speech (in blue?)
-        # TODO: gray out 'Informal', 'Slang', 'Naval' and such
         definitions = self.w.word_get_definitions(word)
         card_define = ''
         for definition in definitions:
             if 'text' in definition:
-                card_define += definition['text'] + u'<br />'
+                card_define += annotate(definition['text'], annotations).lower() + u'<br />'
         return card_define
 
     def example(self, word):
         '''Get example sentences'''
-        # TODO: no more than 3-4 examples (sorted by highest score!)
+        # TODO: sort by highest score!
         examples = self.w.word_get_examples(word)
         card_example = ''
         if 'examples' in examples:
-            # Use no more than 3 example sentences (may also set limit for w_g_examples())
-            for example in examples['examples'][:3]:
+            # Use no more than 2 example sentences (may also set limit for w_g_examples())
+            for example in examples['examples'][:2]:
                 if 'text' in example:
                     card_example += example['text'].replace(word, Decker.bold(word)) + u'<br />'
         return card_example
@@ -182,13 +181,12 @@ class Decker:
         output = open(self.deck, 'w')
         for card_front, card_back in self.cards.items():
             try:
-                # Front of a card: word itself + pronounciation (if any)
-                # TODO: check for non-ascii symbols
                 # Skip the word if no examples or definitions found
                 if (not card_back['define'] and not card_back['example']):
                     puts(colored.yellow('Skipping "%s" (no definition or examples found)' % card_front))
                     continue
-                import_line = card_front
+                # Front of a card: word itself + pronounciation (if any)
+                import_line = unicode(card_front, 'utf-8')
                 if(card_back['pronounce']):
                     import_line += u'<br />' + Decker.span(card_back['pronounce'])
                 del(card_back['pronounce'])
@@ -212,7 +210,6 @@ class Decker:
             except Exception, e:
                 #oops('Could not write a card: %s for word"%s"' % (e, card_front.encode('utf-8')))
                 oops('Could not write a card: %s' % e)
-                #traceback.print_stack()
         puts(colored.green('Deck compilation complete! You may now import resulting "%s" file using Anki.' % self.deck))
 
 def install(args):
@@ -252,7 +249,7 @@ def do(args):
         if(new_words_began):
             # Skip lines starting with '/*'
             if(not line.startswith('/*') and not line.startswith('<!--')):
-                new_words.append(line.strip('\r\n'))
+                new_words.append(line.rstrip(' \r\n'))
         # Separator ought to be at the beginning of the file or somewhere else
         if line.startswith('<!--') and line.strip('\r\n').endswith('-->'):
             # In case there're multiple separators
@@ -271,19 +268,21 @@ def do(args):
                             ])
     except Exception as e:
         oops('Some problem with Wordnik arised: %s' % e)
-        #traceback.print_stack()
 
     # 4. Save to Anki import-compatible text file
     try:
         Decker(cards, args.deck_out)
     except Exception as e:
         oops('Could not write resulting deck: %s' % e)
-        #traceback.print_stack()
+
+@arg('string', help='test string')
+def test(args):
+    puts(colored.yellow('%s, you say?! Nothing here, move along!' % args.string))
 
 if __name__=='__main__':
     try:
         p = ArghParser()
-        p.add_commands([do, install])
+        p.add_commands([do, install, test])
         p.dispatch()
     # In case some python modules are unavailable on target system
     except Exception as e:

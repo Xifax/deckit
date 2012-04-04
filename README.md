@@ -1,8 +1,9 @@
 deckit
 ======
 
-Python script to quickly convert list of (eng) words to text file with (eng-eng) examples and definitions, [suitable] for [Anki] import.<br />
-All words are processed using [Wordnik], so one should aquire unique api key.
+*Python script to quickly convert list of (eng) words to text file with (eng-eng) examples and definitions*, [suitable] for [Anki] import.<br />
+All words are processed using [Wordnik], so *one should aquire unique api key*. Usually finds definitions (or, at least, examples) even for the most obscure lexicon.
+*Plain text output format* over anki deck was chosen do to versatility of anki import (e.g., depending on the model, the same two-fields text could be imported differently).
 
 ---
 
@@ -20,19 +21,19 @@ or
     
 Notes:
 
-* Requires **Python** 2.7
-* Also requires:
+* Requires **Python** 2.7.X
+* Also requires (all dependencies may be installed right from the script itself):
     * argh
     * wordnik
     * clint
     * ordereddict
 * One should get api key from [Wordnik]
+* In case there's alternative/unusual spelling specified, definition will likely say so
 
-Possible bugs and glitches:
+Todo:
 
-* Problems with non-ascii symbols
-* Sudden blank cards
-
+* Batch-processing
+* Additional field for all the optional information (dictionary, part of speech, etc)
 
 [Anki]: http://ankisrs.net/ 
 [suitable]:  http://ankisrs.net/docs/FileImport.html
