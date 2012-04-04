@@ -2,8 +2,8 @@ deckit
 ======
 
 *Python script to quickly convert list of (eng) words to text file with (eng-eng) examples and definitions*, [suitable] for [Anki] import.<br />
-All words are processed using [Wordnik], so *one should aquire unique api key*. Usually finds definitions (or, at least, examples) even for the most obscure lexicon.
-*Plain text output format* over anki deck was chosen do to versatility of anki import (e.g., depending on the model, the same two-fields text could be imported differently).
+All words are processed using [Wordnik], so *one should aquire unique api key*.<br /> Usually finds definitions (or, at least, examples) even for the most obscure lexicon.<br />
+*Plain text output format* over anki deck was chosen due to versatility of anki import (e.g., depending on the model, the same two-fields text could be imported differently).
 
 ---
 
