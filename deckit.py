@@ -251,7 +251,7 @@ def do(args):
             if(not line.startswith('/*') and not line.startswith('<!--')):
                 new_words.append(line.rstrip(' \r\n'))
         # Separator ought to be at the beginning of the file or somewhere else
-        if line.startswith('<!--') and line.strip('\r\n').endswith('-->'):
+        if line.startswith('<!--') and line.strip(' \r\n').endswith('-->'):
             # In case there're multiple separators
             new_words_began = not new_words_began
 
